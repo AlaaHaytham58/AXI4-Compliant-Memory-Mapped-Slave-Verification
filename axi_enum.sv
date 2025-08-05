@@ -1,10 +1,11 @@
-package axi_enum;
+package axi_enum_packet;
 // might needed enums
 // enum for AXI states
 // AXI states for read and write channels
 //axi handshake states
 
 //WRITE/READ states
+/*
 typedef enum logic [2:0] {
   W_IDLE = 3'd0,
   W_ADDR = 3'd1,
@@ -16,7 +17,8 @@ typedef enum logic [2:0] {
   R_IDLE = 3'd0,
   R_ADDR = 3'd1,
   R_DATA = 3'd2
-} read_state_e;
+} read_state_e;*/
+
 //////////////////////////////////////////////
 //AXI RESPONSE 
 typedef enum logic [1:0] {
@@ -34,6 +36,6 @@ typedef enum logic {
 ///////////////////////////////////////////////
 typedef enum {
     INLIMIT,
-    OUTLIMIT,
+    OUTLIMIT
 }boundary_e;
 endpackage 
