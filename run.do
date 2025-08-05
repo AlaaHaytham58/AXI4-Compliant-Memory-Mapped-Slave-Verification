@@ -1,5 +1,5 @@
 vlib work
-vlog axi4_memory.v axi4.sv Top.sv axi4_memory_tb.sv +cover -covercells
+vlog axi_enum.sv axi_constraints.sv axi_memory.sv axi_write_tb.sv axi4_memory_tb.sv +cover -covercells
 vsim -voptargs=+acc work.Top -cover
 coverage save -onexit cov.ucdb
 run -all
