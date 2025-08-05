@@ -2,12 +2,14 @@ module Top;
 	bit ACLK;
 	always #5ns ACLK = ~ACLK;
 
-	arb_if arbif_read (ACLK);
-    arb_if arbif_write (ACLK);
+	
+    arb_if arbif_write(ACLK);
+    axi4 axi_w (arbif_write.axi);
+    axi4_tb tb (.arbif_write(arbif_write)); 
+   
     arb_if arbif_memory (ACLK);
 
-    axi4 axi_read (arbif_read.axi);
-    axi4 axi_write (arbif_write.axi);
+   
 
     axi4_memory mem (arbif_memory.memory);
     
