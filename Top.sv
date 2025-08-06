@@ -2,22 +2,27 @@ module Top;
 	bit ACLK;
 	always #5ns ACLK = ~ACLK;
 
-	arb_if arbif_read (ACLK);
+    //write test	
     arb_if arbif_write (ACLK);
-    arb_if arbif_memory (ACLK);
-
-    axi4 axi_read (arbif_read.axi);
     axi4 axi_write (arbif_write.axi);
 
-    axi4_memory mem (arbif_memory.memory);
+    //read test
+    arb_if arbif_read (ACLK);
+    axi4 axi_read (arbif_read.axi);
     
+    //memory test
+    arb_if arbif_memory (ACLK);
+    axi4_memory mem (arbif_memory.memory);
+    axi4_memory_tb mem_tb (arbif_memory.mem_tb);
+    
+
 endmodule
 
 interface arb_if (input bit ACLK);
     parameter DATA_WIDTH = 32;
     parameter ADDR_WIDTH = 10;    // For 1024 locations
-    parameter DEPTH = 1024;
-    
+    parameter MEMORY_DEPTH = 1024;
+
     //Active low reset
     bit ARESETn;
 
@@ -73,4 +78,11 @@ interface arb_if (input bit ACLK);
         input ACLK, ARESETn, mem_en,mem_we,mem_addr,mem_wdata,
         output mem_rdata
     );
+
+    modport mem_tb (
+        input ACLK,
+        input mem_rdata,
+        output ARESETn, mem_en, mem_we, mem_addr, mem_wdata
+    );
+
 endinterface

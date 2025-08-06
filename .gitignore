@@ -1,3 +1,9 @@
 /work
 *.mti
 *.mpf
+/-html
+axi4_memory_tb.sv.bak
+cov.ucdb
+cov_report.txt
+transcript
+vsim_stacktrace.vstf
