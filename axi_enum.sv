@@ -38,4 +38,10 @@ typedef enum {
     INLIMIT,
     OUTLIMIT
 }boundary_e;
+//Memory read/write
+typedef enum logic [1:0] {
+	OFF,
+	READ = 2'b10,
+	WRITE
+} memory_en_e;
 endpackage 

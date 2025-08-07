@@ -20,7 +20,7 @@ module axi4_memory #(
             if (arbif.mem_we)       
                 memory[arbif.mem_addr] <= arbif.mem_wdata;
              else 
-               mem_rdata <= memory[mem_addr];
+               arbif.mem_rdata <= memory[arbif.mem_addr];
         end
     end
     

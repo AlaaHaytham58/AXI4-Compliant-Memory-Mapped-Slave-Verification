@@ -1,4 +1,4 @@
-     import axi_enum::*;
+     import axi_enum_packet::*;
 
      class memory_stim;
             rand logic rst_n;

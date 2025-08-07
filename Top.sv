@@ -3,8 +3,6 @@ module Top;
     bit ACLK = 0;
     always #5 ACLK = ~ACLK;
 
-   
-    
     arb_if arbif_write(ACLK);
     arb_if arbif_monitor(ACLK);
     arb_if arbif_memory (ACLK);
