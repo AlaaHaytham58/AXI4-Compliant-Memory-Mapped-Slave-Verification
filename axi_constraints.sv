@@ -40,13 +40,18 @@ class axi_packet#(parameter  ADDR_WIDTH = 16,
     inlimit dist {INLIMIT :=50, OUTLIMIT:=50};
     }
     constraint axi_response {
-        axi_resp dist {RESP_OKAY:=40, RESP_EXOKAY:=40, RESP_SLVERR:=20};
+         axi_resp dist {RESP_OKAY:=40, RESP_EXOKAY:=40, RESP_SLVERR:=20};
     }
     constraint axi_access_type {
             axi_access dist {ACCESS_READ:=50, ACCESS_WRITE:=50};
     }
-    constraint axi_boundary_size{
-          ((awaddr & 12'hFFF) + ((awlen + 1) * (1<<2))) <= 4092;
+    constraint axi_boundary_size_write{
+      if (inlimit == INLIMIT)
+      ((awaddr & 12'hFFF) + ((awlen + 1) * (1 << 2))) <= 4096;    
+    }
+    constraint axi_boundary_size_read {
+    if (axi_access == ACCESS_READ && inlimit == INLIMIT)
+      ((araddr & 12'hFFF) + ((arlen + 1) * (1 << 2))) <= 4096;
     }
 
 function randarr();
@@ -57,7 +62,7 @@ data_array = new[awlen + 1];
 endfunction
 //coverage
 covergroup cg;
-// Cover all cases in write channel
+//---------------write coverage----------------
 coverpoint awaddr {
   bins aligned_addr[] = {[0:2**ADDR_WIDTH-1]};
   ignore_bins unaligned_addr = {[0:2**ADDR_WIDTH-1]} with (item % 4 != 0);
@@ -69,6 +74,18 @@ coverpoint awsize {
   bins size_4B = {2};
   
 }
+//-----------read coverage-----------------
+coverpoint araddr {
+    bins aligned_addr[] = {[0:2**ADDR_WIDTH-1]};
+    ignore_bins unaligned = {[0:2**ADDR_WIDTH-1]} with (item % 4 != 0);
+}
+coverpoint arlen {
+    bins burst_len[] = {[0:15]};
+}
+coverpoint arsize {
+    bins size_4B = {2};
+}
+//--------------common part-----------------
 coverpoint axi_resp {
   bins resp_okay = {RESP_OKAY};
   bins resp_exokay = {RESP_EXOKAY};
@@ -82,9 +99,9 @@ coverpoint inlimit {
   bins inlimit = {INLIMIT};
   bins outlimit = {OUTLIMIT};
 }
-
+//---------------crossing----------------
 cross awlen, awsize, axi_resp, axi_access, inlimit;
-
+cross arlen, arsize, axi_resp, axi_access, inlimit;
 endgroup
 function void sample();
   this.cg.sample();
