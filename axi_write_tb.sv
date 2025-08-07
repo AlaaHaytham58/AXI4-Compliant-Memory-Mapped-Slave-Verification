@@ -5,7 +5,7 @@ module axi4_tb #(
   parameter ADDR_WIDTH = 16, 
   parameter MEMORY_DEPTH = 1024
 ) (
-  arb_if.axi arbif_pkt
+  arb_if arbif_pkt
 );
 
 import axi_enum_packet::*;
@@ -24,7 +24,7 @@ initial begin
 
     if (pkt.axi_access == ACCESS_WRITE) begin
       drive_write(pkt);
-      collect_bresp(captured_resp);
+      collect_response(captured_resp);
       golden_model(pkt, golden_resp);
       check_response(captured_resp, golden_resp);
     end else begin
@@ -138,8 +138,8 @@ task automatic collect_rdata(ref axi_packet pkt);
     @(negedge arbif_pkt.ACLK);
   end
   arbif_pkt.RREADY = 0;
-  if (arbif_write.RRESP !== expected_rresp) begin
-  $display("RRESP mismatch: expected %b, got %b", expected_rresp, arbif_write.RRESP);
+  if (arbif_pkt.RRESP !== expected_rresp) begin
+  $display("RRESP mismatch: expected %b, got %b", expected_rresp, arbif_pkt.RRESP);
 end
 endtask
 function automatic void golden_model_read(ref axi_packet pkt, output bit [1:0] rresp_golden);

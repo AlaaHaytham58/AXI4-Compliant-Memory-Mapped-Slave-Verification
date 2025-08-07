@@ -1,5 +1,5 @@
 module axi4_monitor #(parameter DATA_WIDTH = 32, parameter ADDR_WIDTH = 10)(
-    input arb_if.monitor axi_if
+    arb_if.monitor axi_if
 );
 
     integer logfile;
