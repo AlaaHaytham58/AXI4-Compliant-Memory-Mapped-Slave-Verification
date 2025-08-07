@@ -3,14 +3,18 @@ module Top;
     bit ACLK = 0;
     always #5 ACLK = ~ACLK;
 
+   
+    
     arb_if arbif_write(ACLK);
     arb_if arbif_monitor(ACLK);
     arb_if arbif_memory (ACLK);
 
     axi4_memory  mem (arbif_memory.memory);
+    axi4_memory_tb mem_tb (arbif_memory.mem_tb);
     axi4_tb      axi_w  (.arbif_write(arbif_write.axi));
     axi4_monitor mon  (.axi_if(arbif_monitor.monitor));
     
+
 endmodule
 
 interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (input bit ACLK);
@@ -72,6 +76,13 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
         input ACLK, ARESETn, mem_en,mem_we,mem_addr,mem_wdata,
         output mem_rdata
     );
+
+    modport mem_tb (
+        input ACLK,
+        input mem_rdata,
+        output ARESETn, mem_en, mem_we, mem_addr, mem_wdata
+    );
+
     modport monitor(
         input ACLK, ARESETn, 
         AWADDR, AWLEN, AWSIZE, AWVALID, 
