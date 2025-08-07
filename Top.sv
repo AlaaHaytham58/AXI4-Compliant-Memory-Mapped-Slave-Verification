@@ -1,25 +1,20 @@
-module Top;
-	bit ACLK;
-	always #5ns ACLK = ~ACLK;
 
-	
+module Top;
+    bit ACLK = 0;
+    always #5 ACLK = ~ACLK;
+
     arb_if arbif_write(ACLK);
-    axi4 axi_w (arbif_write.axi);
-    axi4_tb tb (.arbif_write(arbif_write)); 
-   
+    arb_if arbif_monitor(ACLK);
     arb_if arbif_memory (ACLK);
 
-   
-
-    axi4_memory mem (arbif_memory.memory);
+    axi4_memory  mem (arbif_memory.memory);
+    axi4_tb      axi_w  (.arbif_write(arbif_write.axi));
+    axi4_monitor mon  (.axi_if(arbif_monitor.monitor));
     
 endmodule
 
-interface arb_if (input bit ACLK);
-    parameter DATA_WIDTH = 32;
-    parameter ADDR_WIDTH = 10;    // For 1024 locations
-    parameter DEPTH = 1024;
-    
+interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (input bit ACLK);
+
     //Active low reset
     bit ARESETn;
 
@@ -51,8 +46,9 @@ interface arb_if (input bit ACLK);
     logic [1:0] RRESP;
 
     //memory signals
+    //memory signals
     logic mem_en, mem_we;
-    logic [$clog2(MEMORY_DEPTH)-1:0] mem_addr;
+    logic [$clog2(DEPTH)-1:0] mem_addr;
     logic [DATA_WIDTH-1:0] mem_wdata;
     logic [DATA_WIDTH-1:0] mem_rdata;
 
@@ -63,6 +59,7 @@ interface arb_if (input bit ACLK);
         BREADY, 
         ARADDR,ARLEN, ARSIZE, ARVALID, 
         RREADY, mem_rdata,
+
         output AWREADY, WREADY, 
         BRESP, BVALID, 
         ARREADY,
@@ -74,5 +71,18 @@ interface arb_if (input bit ACLK);
     modport memory (
         input ACLK, ARESETn, mem_en,mem_we,mem_addr,mem_wdata,
         output mem_rdata
+    );
+    modport monitor(
+        input ACLK, ARESETn, 
+        AWADDR, AWLEN, AWSIZE, AWVALID, 
+        WDATA, WLAST, WVALID, 
+        BREADY, 
+        ARADDR,ARLEN, ARSIZE, ARVALID, 
+        RREADY, mem_rdata,
+         AWREADY, WREADY, 
+        BRESP, BVALID, 
+        ARREADY,
+        RDATA,RRESP,RLAST,RVALID,
+        mem_en, mem_we, mem_addr, mem_wdata
     );
 endinterface
