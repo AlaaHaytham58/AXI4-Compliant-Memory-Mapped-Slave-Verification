@@ -103,9 +103,13 @@ coverpoint inlimit {
 cross awlen, awsize, axi_resp, axi_access, inlimit;
 cross arlen, arsize, axi_resp, axi_access, inlimit;
 endgroup
-function void sample();
-  this.cg.sample();
-endfunction
+ function new();
+    cg = new();
+  endfunction
+
+  function void sample();
+    this.cg.sample();
+  endfunction
 endclass
 
 

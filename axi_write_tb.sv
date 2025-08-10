@@ -18,7 +18,7 @@ bit [1:0] expected_rresp;
 //bit [DATA_WIDTH-1:0] read_data_q[$];  
 
 initial begin
-  repeat (100) begin
+  repeat (1000) begin
     pkt = new();
     generate_stimulus(pkt);
 
@@ -27,11 +27,14 @@ initial begin
       collect_response(captured_resp);
       golden_model(pkt, golden_resp);
       check_response(captured_resp, golden_resp);
+   
     end else begin
       drive_read(pkt);
       collect_rdata(pkt);
       golden_model_read(pkt, expected_rresp);
+    
     end
+       pkt.cg.sample();
   end
   $finish;
 end
