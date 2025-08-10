@@ -9,8 +9,8 @@ module Top;
 
     axi4_memory  mem (arbif_memory.memory);
     axi4_memory_tb mem_tb (arbif_memory.mem_tb);
-    axi4_tb      axi_w  (.arbif_write(arbif_write.axi));
-    axi4_monitor mon  (.axi_if(arbif_monitor.monitor));
+    axi4_tb      axi_w  (arbif_write.axi);
+    axi4_monitor mon  (arbif_monitor.monitor);
     
 
 endmodule
