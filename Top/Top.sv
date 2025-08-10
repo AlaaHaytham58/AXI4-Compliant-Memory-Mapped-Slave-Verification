@@ -4,13 +4,15 @@ module Top;
     always #5 ACLK = ~ACLK;
 
     arb_if arbif_write(ACLK);
-    arb_if arbif_monitor(ACLK);
-    arb_if arbif_memory (ACLK);
+    axi4_tb      axi_w  (arbif_write.axi);
 
+    arb_if arbif_monitor(ACLK);
+    axi4_monitor mon  (arbif_monitor.monitor);
+
+    arb_if arbif_memory (ACLK);
     axi4_memory  mem (arbif_memory.memory);
     axi4_memory_tb mem_tb (arbif_memory.mem_tb);
-    axi4_tb      axi_w  (arbif_write.axi);
-    axi4_monitor mon  (arbif_monitor.monitor);
+    
     
 
 endmodule

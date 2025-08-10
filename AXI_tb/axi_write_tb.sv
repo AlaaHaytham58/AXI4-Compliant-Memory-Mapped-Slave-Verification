@@ -78,6 +78,7 @@ endfunction
       arbif_pkt.WVALID = 0;
       arbif_pkt.WLAST  = 0;
       arbif_pkt.WDATA  = 0;
+      
     end
   endtask
 
