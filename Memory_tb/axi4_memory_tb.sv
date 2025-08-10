@@ -1,4 +1,4 @@
-`include "memory_class.sv";
+`include "../Packages/memory_class.sv";
 
 module axi4_memory_tb  #(
     parameter DATA_WIDTH = 32,

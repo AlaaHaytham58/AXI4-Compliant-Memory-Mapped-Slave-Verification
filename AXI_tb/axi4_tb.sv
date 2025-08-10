@@ -1,4 +1,4 @@
-`include "axi_constraints.sv"
+`include "../Packages/axi_constraints.sv"
 
 module axi4_tb #(
   parameter DATA_WIDTH = 32, 
@@ -18,6 +18,11 @@ bit [1:0] expected_rresp;
 //bit [DATA_WIDTH-1:0] read_data_q[$];  
 
 initial begin
+  
+  arbif_pkt.ARESETn = 0;
+  #10; 
+  arbif_pkt.ARESETn = 1;
+
   repeat (1000) begin
     pkt = new();
     generate_stimulus(pkt);
@@ -34,7 +39,7 @@ initial begin
       golden_model_read(pkt, expected_rresp);
     
     end
-       pkt.cg.sample();
+    pkt.cg.sample();
   end
   $finish;
 end
@@ -78,7 +83,7 @@ endfunction
       arbif_pkt.WVALID = 0;
       arbif_pkt.WLAST  = 0;
       arbif_pkt.WDATA  = 0;
-      
+
     end
   endtask
 

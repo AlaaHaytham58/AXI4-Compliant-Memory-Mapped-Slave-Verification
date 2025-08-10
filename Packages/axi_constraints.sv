@@ -3,6 +3,7 @@ package axi_packet_all;
 
 import axi_enum_packet::*;
 
+//--- MISSING SIGNALS: AWVALID,WLAST,WVALID,BREADY,ARVALID,RREADY ---
 class axi_packet #(parameter  ADDR_WIDTH = 16, 
                   parameter  DATA_WIDTH = 32, 
                   parameter MemoryDepth = 1024);
