@@ -187,6 +187,7 @@ module axi4 #(
             // --------------------------
             // Write Channel FSM
             // --------------------------
+
             case (write_state)
                 W_IDLE: begin
                     AWREADY <= 1'b1;
@@ -236,7 +237,10 @@ module axi4 #(
                             BVALID <= 1'b1;
                         end else begin
                             // Continue burst - increment address
-                            write_addr <= write_addr + write_addr_incr;
+
+                            /* ================================  Modification  =================================== */
+                            //Address should be shifted by 2
+                            write_addr <= (write_addr + write_addr_incr) >> 2;
                             write_burst_cnt <= write_burst_cnt - 1'b1;
                         end
                     end
@@ -261,7 +265,7 @@ module axi4 #(
                     ARREADY <= 1'b1;
                     RVALID <= 1'b0;
                     RLAST <= 1'b0;
-                    
+
                     if (ARVALID && ARREADY) begin
                         // Capture address phase information
                         read_addr <= ARADDR;
@@ -279,8 +283,16 @@ module axi4 #(
                     if (read_addr_valid && !read_boundary_cross) begin
                         mem_en <= 1'b1;
                         mem_addr <= read_addr >> 2;  // Convert to word address
+                        read_state <= R_DATA;
+                     end 
+                    /* ================================  Modification  =================================== */
+                    //return to IDLE state if invalid addresses are given
+                   else begin
+                        RDATA <= {DATA_WIDTH{1'b0}};
+                        RVALID <= 1;
+                        RRESP <= 2'b10;  // SLVERR
+                        read_state <= R_IDLE;
                     end
-                    read_state <= R_DATA;
                 end
                 
                 R_DATA: begin
@@ -291,12 +303,24 @@ module axi4 #(
                     end else begin
                         RDATA <= {DATA_WIDTH{1'b0}};
                         RRESP <= 2'b10;  // SLVERR
+                        /* ================================  Modification  =================================== */
+                        //return to IDLE state if wrong addresses are given
+                        read_state <= R_IDLE;
                     end
                     
                     RVALID <= 1'b1;
-                    RLAST <= (read_burst_cnt == 0);
+                    RLAST <= (read_burst_cnt - 1 == 0);
                     
-                    if (RREADY && RVALID) begin
+                    /* ================================  Modification  =================================== */
+                    // To ensure that we return to IDLE even if RREADY is not asserted
+                    if (RLAST)
+                    begin
+                        // End of burst
+                        RLAST <= 1'b0;
+                        RVALID <= 1'b0;
+                        read_state <= R_IDLE;
+                    end
+                    else if (RREADY && RVALID) begin
                         RVALID <= 1'b0;
                         
                         if (read_burst_cnt > 0) begin
@@ -309,13 +333,7 @@ module axi4 #(
                                 mem_en <= 1'b1;
                                 mem_addr <= (read_addr + read_addr_incr) >> 2;
                             end
-                            
-                            // Stay in R_DATA for next transfer
-                        end else begin
-                            // End of burst
-                            RLAST <= 1'b0;
-                            read_state <= R_IDLE;
-                        end
+                        end 
                     end
                 end
                 
