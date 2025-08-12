@@ -1,20 +1,3 @@
-
-module Top;
-    bit ACLK = 0;
-    always #5 ACLK = ~ACLK;
-
-    arb_if arbif_write(ACLK);
-    arb_if arbif_monitor(ACLK);
-    arb_if arbif_memory (ACLK);
-
-    axi4_memory  mem (arbif_memory.memory);
-    axi4_memory_tb mem_tb (arbif_memory.mem_tb);
-    axi4_tb      axi_w  (arbif_write.axi);
-    axi4_monitor mon  (arbif_monitor.monitor);
-    
-
-endmodule
-
 interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (input bit ACLK);
 
     //Active low reset
@@ -60,13 +43,29 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
         WDATA, WLAST, WVALID, 
         BREADY, 
         ARADDR,ARLEN, ARSIZE, ARVALID, 
-        RREADY, mem_rdata,
+        RREADY,
+        mem_rdata,
 
         output AWREADY, WREADY, 
         BRESP, BVALID, 
         ARREADY,
-        RDATA,RRESP,RLAST,RVALID,
+        RDATA,RRESP,RLAST,RVALID, 
         mem_en, mem_we, mem_addr, mem_wdata
+
+    );
+
+    modport axi_tb (
+        input ACLK, AWREADY, WREADY, 
+        BRESP, BVALID, 
+        ARREADY,
+        RDATA,RRESP,RLAST,RVALID,
+
+        output ARESETn, 
+        AWADDR, AWLEN, AWSIZE, AWVALID, 
+        WDATA, WLAST, WVALID, 
+        BREADY, 
+        ARADDR,ARLEN, ARSIZE, ARVALID, 
+        RREADY
     );
 
 

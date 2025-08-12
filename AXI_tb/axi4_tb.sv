@@ -1,4 +1,4 @@
-`include "axi_constraints.sv"
+`include "../Packages/axi_constraints.sv"
 
 module axi4_tb #(
   parameter DATA_WIDTH = 32, 
@@ -18,6 +18,11 @@ bit [1:0] expected_rresp;
 //bit [DATA_WIDTH-1:0] read_data_q[$];  
 
 initial begin
+
+  arbif_pkt.ARESETn = 0;
+  @(negedge arbif_pkt.ACLK);
+  arbif_pkt.ARESETn = 1;
+
   repeat (1000) begin
     pkt = new();
     generate_stimulus(pkt);
@@ -34,9 +39,9 @@ initial begin
       golden_model_read(pkt, expected_rresp);
     
     end
-       pkt.cg.sample();
+    pkt.cg.sample();
   end
-  $finish;
+  $stop;
 end
 //--------------------WRITE FUNCTIONALITY--------------------------
 function automatic void generate_stimulus(ref axi_packet pkt);
@@ -53,6 +58,7 @@ endfunction
       arbif_pkt.AWSIZE  = write.awsize;
       arbif_pkt.BREADY  = 1;
 
+      $display("Write Started");
       if (write.inlimit == INLIMIT)
         arbif_pkt.AWADDR = write.awaddr;
       else
@@ -60,7 +66,10 @@ endfunction
 
       @(negedge arbif_pkt.ACLK);
       arbif_pkt.AWVALID = 1;
+
+      $display("Waiting on AWREADY......");
       wait (arbif_pkt.AWREADY);
+
       @(negedge arbif_pkt.ACLK);
       arbif_pkt.AWVALID = 0;
 
@@ -70,6 +79,8 @@ endfunction
         arbif_pkt.WDATA  = write.data_array[i];
         arbif_pkt.WVALID = 1;
         arbif_pkt.WLAST  = (i == write.awlen) ? 1 : 0;
+      
+        $display("Waiting on WREADY......");
         wait (arbif_pkt.WREADY);
       end
 
@@ -82,7 +93,9 @@ endfunction
   endtask
 
   task automatic collect_response(output bit [1:0] bresp);
+    $display("Waiting on BVALID......");
     wait (arbif_pkt.BVALID);
+
     bresp = arbif_pkt.BRESP;
     @(negedge arbif_pkt.ACLK);
     arbif_pkt.BREADY = 0;
@@ -94,7 +107,7 @@ endfunction
       if (write.inlimit == INLIMIT)
         bresp = 2'b00; 
       else
-        bresp = ($urandom_range(0, 1) == 0) ? 2'b10 : 2'b01; // RESP_SLVERR or RESP_EXOKAY
+        bresp = 2'b10;
     end
   endfunction
 
@@ -109,28 +122,53 @@ endfunction
 
 task automatic drive_read(ref axi_packet pkt);
   if (pkt.axi_access == ACCESS_READ) begin
+
+    @(negedge arbif_pkt.ACLK)
     arbif_pkt.ARLEN   = pkt.arlen;
     arbif_pkt.ARSIZE  = pkt.arsize;
+
     if (pkt.inlimit == INLIMIT)
       arbif_pkt.ARADDR = pkt.araddr;
     else
-      arbif_pkt.ARADDR = $urandom_range(MEMORY_DEPTH * 4, 2**ADDR_WIDTH - 1);
+      arbif_pkt.ARADDR = 2'b10;
+
+    $display("Read Started");
 
     @(negedge arbif_pkt.ACLK);
     arbif_pkt.ARVALID = 1;
-    wait (arbif_pkt.ARREADY);
+
+    $display("Waiting on ARREADY......");
+    while (~arbif_pkt.ARREADY)
+    begin
+      if (arbif_pkt.BVALID && arbif_pkt.RRESP == 2'b10) begin
+        $error("SLVERR while reading");
+        break;
+      end
+    end
+
     @(negedge arbif_pkt.ACLK);
     arbif_pkt.ARVALID = 0;
   end
 
 endtask
 task automatic collect_rdata(ref axi_packet pkt);
-  
-
-  for (int i = 0; i <= pkt.arlen; i++) begin
+  for (int i = 0; i < pkt.arlen; i++) begin
+    if (arbif_pkt.RRESP == 2'b10 && arbif_pkt.RVALID == 1'b0)
+      begin
+        $error("Addresses out of range, data not collected");
+        break;
+      end
+    @(negedge arbif_pkt.ACLK);
     arbif_pkt.RREADY = 1;
-    wait (arbif_pkt.RVALID);
-    
+    $display("Waiting on RVALID......");
+    while (~arbif_pkt.RVALID)
+    begin
+      if (arbif_pkt.RRESP == 2'b10) begin
+        $error("SLVERR while reading");
+        break;
+      end
+      @(negedge arbif_pkt.ACLK);
+    end
 
     $display("[READ] Beat %0d: Data = %h, RRESP = %b", 
               i, arbif_pkt.RDATA, arbif_pkt.RRESP);
@@ -138,7 +176,7 @@ task automatic collect_rdata(ref axi_packet pkt);
     if (arbif_pkt.RLAST) begin
       $display("[READ] Last data beat received.");
     end
-    @(negedge arbif_pkt.ACLK);
+
   end
   arbif_pkt.RREADY = 0;
   if (arbif_pkt.RRESP !== expected_rresp) begin
@@ -162,7 +200,5 @@ function automatic void golden_model_read(ref axi_packet pkt, output bit [1:0] r
     rresp_golden = 2'b00;  
   end
 endfunction
-
-
 
 endmodule
