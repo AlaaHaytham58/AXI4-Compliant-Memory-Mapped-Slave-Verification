@@ -101,6 +101,11 @@ module axi4 #(
     
     wire [ADDR_WIDTH-1:0] write_addr_incr,read_addr_incr;
     
+    wire write_addr_valid;
+    wire write_boundary_cross;
+    wire read_addr_valid;
+    wire read_boundary_cross;
+    
     
     
     // Address increment calculation
