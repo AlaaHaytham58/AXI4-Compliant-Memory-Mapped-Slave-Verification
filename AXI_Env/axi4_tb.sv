@@ -59,8 +59,6 @@ initial begin
         check_wdata(pkt);
 
       end else begin
-        pkt = new();
-
         drive_read(pkt);
         //Skip testcase if valid signal took too long to respond
         if (wait_valid <= 0)  begin

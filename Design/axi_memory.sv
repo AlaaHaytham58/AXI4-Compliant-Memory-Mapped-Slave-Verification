@@ -3,7 +3,14 @@ module axi4_memory #(
     parameter ADDR_WIDTH = 10,    // For 1024 locations
     parameter DEPTH = 1024
 )(
-    arb_if.memory arbif
+    input  wire                     clk,
+    input  wire                     rst_n,
+    
+    input  wire                     mem_en,
+    input  wire                     mem_we,
+    input  wire [ADDR_WIDTH-1:0]    mem_addr,
+    input  wire [DATA_WIDTH-1:0]    mem_wdata,
+    output reg  [DATA_WIDTH-1:0]    mem_rdata
 );
 
     // Memory array
@@ -14,13 +21,13 @@ module axi4_memory #(
     
     // Memory write
     always @(posedge arbif.ACLK) begin
-        if (~arbif.ARESETn)
-            arbif.mem_rdata <= 0;
-        else if (arbif.mem_en) begin
-            if (arbif.mem_we)       
-                memory[arbif.mem_addr] <= arbif.mem_wdata;
+        if (~ARESETn)
+            mem_rdata <= 0;
+        else if (mem_en) begin
+            if (mem_we)       
+                memory[mem_addr] <= mem_wdata;
              else 
-               arbif.mem_rdata <= memory[arbif.mem_addr];
+               mem_rdata <= memory[mem_addr];
         end
     end
     

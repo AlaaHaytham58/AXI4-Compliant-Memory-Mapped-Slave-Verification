@@ -87,11 +87,11 @@ module axi4 #(
     reg [DATA_WIDTH-1:0] mem_wdata;
     wire [DATA_WIDTH-1:0] mem_rdata;
     
-    assign arbif.mem_en = mem_en;
-    assign arbif.mem_we = mem_we;
-    assign arbif.mem_addr = mem_addr;
-    assign arbif.mem_wdata = mem_wdata;
-    assign mem_rdata = arbif.mem_rdata;
+    // assign arbif.mem_en = mem_en;
+    // assign arbif.mem_we = mem_we;
+    // assign arbif.mem_addr = mem_addr;
+    // assign arbif.mem_wdata = mem_wdata;
+    // assign mem_rdata = arbif.mem_rdata;
 
     // Address and burst management
     reg [ADDR_WIDTH-1:0] write_addr, read_addr;
@@ -116,19 +116,19 @@ module axi4 #(
     assign read_addr_valid = (read_addr >> 2) < MEMORY_DEPTH;
 
     //  Memory instance
-    // axi4_memory #(
-    //     .DATA_WIDTH(DATA_WIDTH),
-    //     .ADDR_WIDTH($clog2(MEMORY_DEPTH)),
-    //     .DEPTH(MEMORY_DEPTH)
-    // ) mem_inst (
-    //     .clk(ACLK),
-    //     .rst_n(ARESETn),
-    //     .mem_en(mem_en),
-    //     .mem_we(mem_we),
-    //     .mem_addr(mem_addr),
-    //     .mem_wdata(mem_wdata),
-    //     .mem_rdata(mem_rdata)
-    // );
+    axi4_memory #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .ADDR_WIDTH($clog2(MEMORY_DEPTH)),
+        .DEPTH(MEMORY_DEPTH)
+    ) mem_inst (
+        .clk(ACLK),
+        .rst_n(ARESETn),
+        .mem_en(mem_en),
+        .mem_we(mem_we),
+        .mem_addr(mem_addr),
+        .mem_wdata(mem_wdata),
+        .mem_rdata(mem_rdata)
+    );
 
     // FSM states
     reg [2:0] write_state;
@@ -196,8 +196,8 @@ module axi4 #(
                     if (AWVALID && AWREADY) begin
                         // Capture address phase information
                         write_addr <= AWADDR;
-                        write_burst_len <= AWLEN;
-                        write_burst_cnt <= AWLEN;
+                        write_burst_len <= AWLEN + 1;
+                        write_burst_cnt <= AWLEN + 1;
                         write_size <= AWSIZE;
                         
                         AWREADY <= 1'b0;
@@ -268,8 +268,8 @@ module axi4 #(
                     if (ARVALID && ARREADY) begin
                         // Capture address phase information
                         read_addr <= ARADDR;
-                        read_burst_len <= ARLEN;
-                        read_burst_cnt <= ARLEN;
+                        read_burst_len <= ARLEN + 1;
+                        read_burst_cnt <= ARLEN + 1;
                         read_size <= ARSIZE;
                         
                         ARREADY <= 1'b0;
@@ -295,17 +295,24 @@ module axi4 #(
                         /* ================================  Modification  =================================== */
                         //RLAST should follow this condition only if the address is valid
                         RLAST <= (read_burst_cnt == 0);
-
+                        RVALID <= 1'b1;
                     end else begin
                         RDATA <= {DATA_WIDTH{1'b0}};
                         RRESP <= 2'b10;  // SLVERR
+
                         /* ================================  Modification  =================================== */
                         //RLAST should be set to 1 and return to idle state in the next cycle
                         RLAST <= 1'b1;
-                        read_state <= R_IDLE;
+                        if (RREADY) begin
+                            RVALID <= 1;
+                            read_state <= R_IDLE;
+                        end
+                        else begin
+                            RVALID <= 0;
+                        end
+                        
                     end
                     
-                    RVALID <= 1'b1;
                     if (RREADY && RVALID) begin
                         RVALID <= 1'b0;
                         

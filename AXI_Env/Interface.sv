@@ -30,13 +30,6 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
     //Read response
     logic [1:0] RRESP;
 
-    //memory signals
-    //memory signals
-    logic mem_en, mem_we;
-    logic [$clog2(DEPTH)-1:0] mem_addr;
-    logic [DATA_WIDTH-1:0] mem_wdata;
-    logic [DATA_WIDTH-1:0] mem_rdata;
-
     modport axi (
         input ACLK, ARESETn, 
         AWADDR, AWLEN, AWSIZE, AWVALID, 
@@ -44,14 +37,11 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
         BREADY, 
         ARADDR,ARLEN, ARSIZE, ARVALID, 
         RREADY,
-        mem_rdata,
 
         output AWREADY, WREADY, 
         BRESP, BVALID, 
         ARREADY,
-        RDATA,RRESP,RLAST,RVALID, 
-        mem_en, mem_we, mem_addr, mem_wdata
-
+        RDATA,RRESP,RLAST,RVALID
     );
 
     modport axi_tb (
@@ -69,17 +59,6 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
     );
 
 
-    modport memory (
-        input ACLK, ARESETn, mem_en,mem_we,mem_addr,mem_wdata,
-        output mem_rdata
-    );
-
-    modport mem_tb (
-        input ACLK,
-        input mem_rdata,
-        output ARESETn, mem_en, mem_we, mem_addr, mem_wdata
-    );
-
     modport monitor(
         input ACLK, ARESETn, 
         AWADDR, AWLEN, AWSIZE, AWVALID, 
@@ -90,7 +69,6 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
         AWREADY, WREADY, 
         BRESP, BVALID, 
         ARREADY,
-        RDATA,RRESP,RLAST,RVALID,
-        mem_en, mem_we, mem_addr, mem_wdata
+        RDATA,RRESP,RLAST,RVALID
     );
 endinterface
