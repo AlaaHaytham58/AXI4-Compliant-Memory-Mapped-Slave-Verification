@@ -52,7 +52,7 @@ class axi_packet #(parameter  ADDR_WIDTH = 16,
     }
 
     constraint axi_access_type {
-            axi_access dist {ACCESS_READ:=50, ACCESS_WRITE:=50};
+            axi_access dist { ACCESS_WRITE:= 50, ACCESS_READ:= 50};
     }
 
     constraint axi_boundary_size_write{

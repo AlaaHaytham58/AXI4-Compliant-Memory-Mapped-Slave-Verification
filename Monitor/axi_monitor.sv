@@ -25,6 +25,7 @@ module axi4_monitor #(
         end
     end
 
+
     always @(negedge axi_if.ACLK) begin
         // write address handshake
         if (axi_if.AWVALID && axi_if.AWREADY) begin
@@ -35,8 +36,8 @@ module axi4_monitor #(
 
         // write data
         if (axi_if.WVALID && axi_if.WREADY) begin
-            $fwrite(logfile, "[%0t] WDATA = %h, WLAST = %b\n", 
-                    $time, axi_if.WDATA, axi_if.WLAST);
+            $fwrite(logfile, "[%0t] WDATA = %h, WLAST = %b AWADDR = %h, AWLEN = %0d\n", 
+                    $time, axi_if.WDATA, axi_if.WLAST,axi_if.AWADDR, axi_if.AWLEN);
             cg.sample();
         end
 
@@ -55,8 +56,8 @@ module axi4_monitor #(
 
         // read data
         if (axi_if.RVALID && axi_if.RREADY) begin
-            $fwrite(logfile, "[%0t] RDATA = %h, RLAST = %b, RRESP = %b\n", 
-                    $time, axi_if.RDATA, axi_if.RLAST, axi_if.RRESP);
+            $fwrite(logfile, "[%0t] RDATA = %h, RLAST = %b, RRESP = %b ARADDR = %h, ARLEN = %0d\n", 
+                    $time, axi_if.RDATA, axi_if.RLAST, axi_if.RRESP,axi_if.ARADDR, axi_if.ARLEN);
             cg.sample();
         end
     end

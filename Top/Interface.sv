@@ -87,7 +87,7 @@ interface arb_if #(parameter DATA_WIDTH = 32, ADDR_WIDTH = 16, DEPTH = 1024) (in
         BREADY, 
         ARADDR,ARLEN, ARSIZE, ARVALID, 
         RREADY, mem_rdata,
-         AWREADY, WREADY, 
+        AWREADY, WREADY, 
         BRESP, BVALID, 
         ARREADY,
         RDATA,RRESP,RLAST,RVALID,

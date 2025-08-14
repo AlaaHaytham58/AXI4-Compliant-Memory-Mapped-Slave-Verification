@@ -7,3 +7,4 @@ cov.ucdb
 cov_report.txt
 transcript
 vsim_stacktrace.vstf
+vsim.wlf
