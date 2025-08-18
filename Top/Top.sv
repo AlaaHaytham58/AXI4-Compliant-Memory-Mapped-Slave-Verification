@@ -6,7 +6,7 @@ module Top;
 
     arb_if          arbif_write(ACLK);
     axi4            axi(arbif_write.axi);
-    axi4_memory     mem_axi (arbif_write.memory);
+    //axi4_memory     mem_axi (arbif_write.memory);
     axi4_tb         axi_tb  (arbif_write.axi_tb);
 
 //-----------------------------------------------------
@@ -14,8 +14,8 @@ module Top;
     axi_assertions_module   axi_check(arbif_write.axi);
 
 
-    arb_if          arbif_memory (ACLK);
-    axi4_memory     mem (arbif_memory.memory);
-    axi4_memory_tb  mem_tb (arbif_memory.mem_tb);
+    // arb_if          arbif_memory (ACLK);
+    // axi4_memory     mem (arbif_memory.memory);
+    // axi4_memory_tb  mem_tb (arbif_memory.mem_tb);
 endmodule
 
