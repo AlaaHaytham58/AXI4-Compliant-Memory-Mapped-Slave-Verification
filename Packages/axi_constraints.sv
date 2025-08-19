@@ -3,7 +3,7 @@ package axi_packet_all;
 
 import axi_enum_packet::*;
 
-//--- MISSING SIGNALS: AWVALID,WLAST,WVALID,BREADY,ARVALID,RREADY ---
+//---- MISSING SIGNALS: AWVALID,WLAST,WVALID,BREADY,ARVALID,RREADY ----
 class axi_packet #(parameter  ADDR_WIDTH = 16, 
                   parameter  DATA_WIDTH = 32, 
                   parameter MemoryDepth = 1024);
@@ -18,6 +18,8 @@ class axi_packet #(parameter  ADDR_WIDTH = 16,
   rand logic [ADDR_WIDTH-1:0] araddr;
   rand logic [7:0] arlen;
   rand logic [2:0] arsize;
+  rand logic [DATA_WIDTH-1:0] rdata[];
+
 
 // randomization variables for response
   rand axi_resp_e axi_resp;
@@ -65,11 +67,25 @@ class axi_packet #(parameter  ADDR_WIDTH = 16,
       ((araddr & 12'hFFF) + ((arlen + 1) * (1 << 2))) <= 4096;
     }
 
-function randarr();
+function void randarr();
   data_array = new[awlen + 1];
 
   foreach (data_array[i]) begin
     data_array[i] = $urandom_range(0, 2**DATA_WIDTH - 1);
+  end
+endfunction
+function void randwrite();
+  wdata = new[awlen + 1];
+
+  foreach (wdata[i]) begin
+    wdata[i] = $urandom_range(0, 2**DATA_WIDTH - 1);
+  end
+endfunction
+function void randread();
+  rdata = new[arlen + 1];
+
+  foreach (rdata[i]) begin
+    rdata[i] = $urandom_range(0, 2**DATA_WIDTH - 1);
   end
 endfunction
 
