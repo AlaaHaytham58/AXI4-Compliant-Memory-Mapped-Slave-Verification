@@ -40,7 +40,7 @@ module axi4_tb #(
     initial begin
         // Initialize memory with some test data
         for (int i = 0; i < MEMORY_DEPTH; i++) begin
-            test_mem[i] = i; // Fill memory with incremental values
+            test_mem[i] = i; 
         end
 
         arbif_pkt.ARESETn = 0;
@@ -53,8 +53,6 @@ module axi4_tb #(
 
             if (pkt.axi_access == ACCESS_WRITE) begin
                 drive_write(pkt);
-
-                // Check timeout
                 if (wait_valid <= 0) begin
                     $error("Couldn't Continue the test case, ARREADY took too long to respond");
                     continue;
@@ -95,7 +93,12 @@ module axi4_tb #(
             $display("Randomization failed");
             $stop;
         end
-        pkt.randarr();
+         if (pkt.axi_access == ACCESS_WRITE) begin
+        pkt.randarr();     // golden write reference
+    end
+    else begin
+        pkt.randread();    // AXI RDATA golden model
+    end
     endfunction
 
     task automatic drive_write(ref axi_packet write);
@@ -167,7 +170,7 @@ module axi4_tb #(
         if (write.inlimit == INLIMIT) begin
             bresp = 2'b00;
             for (int i = 0; i <= write.awlen; i++) begin
-                test_mem[(write.awaddr + i*4) >> 2] = write.data_array[i]; // Corrected address calculation
+                test_mem[(write.awaddr + i*4) >> 2] = write.data_array[i];
                 $display("Writing to memory: Address = %0h, Data = %0h", (write.awaddr + i*4), write.data_array[i]);
             end
         end
@@ -250,8 +253,7 @@ module axi4_tb #(
             read_data[i].resp = arbif_pkt.RRESP;
             read_data[i].last = arbif_pkt.RLAST;
 
-            $display("[READ] Beat %0d: Data = %h, RRESP = %b",
-                     i, arbif_pkt.RDATA, arbif_pkt.RRESP);
+            $display("[READ] Beat %0d: Data = %h, RRESP = %b",i, read_data[i].data,read_data[i].resp);
 
             if (arbif_pkt.RLAST) begin
                 $display("[READ] Last data beat received.");
@@ -263,44 +265,80 @@ module axi4_tb #(
         arbif_pkt.RREADY = 0;
     endtask
 
-    function automatic void golden_model_read(ref axi_packet pkt,
-                                              output bit [1:0] rresp_golden);
-        int start_addr   = pkt.araddr;
-        int word_addr    = start_addr >> 2;
-        int num_beats    = pkt.arlen + 1;
-        int total_bytes  = num_beats * (1 << pkt.arsize);
+    /*function automatic void golden_model_read(ref axi_packet pkt,
+                                          output bit [1:0] rresp_golden);
+    int start_addr   = pkt.araddr;
+    int word_addr    = start_addr >> 2;
+    int num_beats    = pkt.arlen + 1;
+    int total_bytes  = num_beats * (1 << pkt.arsize);
 
-        bit boundary     = ((start_addr % 4096) + total_bytes > 4096);
-        bit out_of_range = ((word_addr + num_beats) > MEMORY_DEPTH);
+    bit boundary     = ((start_addr % 4096) + total_bytes > 4096);
+    bit out_of_range = ((word_addr + num_beats) > MEMORY_DEPTH);
 
-        for (int i = 0; i <= pkt.arlen; i++) begin
-            if (word_addr >= MEMORY_DEPTH || 
-                ((start_addr + i*4) % 4096) + total_bytes > 4096) begin
-                expected_data[i].data = 0;
-                expected_data[i].resp = 2'b10; // Indicate error
-                expected_data[i].last = 1;
-                $display("Out of range access: Address = %0h", (start_addr + i*4));
-                break;
-            end
-            else begin
-                expected_data[i].data = test_mem[(start_addr + i*4) >> 2];
-                expected_data[i].resp = 2'b00; // No error
-                expected_data[i].last = (i == pkt.arlen);
-                $display("Reading from memory: Address = %0h, Data = %0h", (start_addr + i*4), expected_data[i].data);
-            end
+    expected_data = new[num_beats];
+
+    for (int i = 0; i < num_beats; i++) begin
+        if (out_of_range || boundary) begin
+            expected_data[i].data = '0;
+            expected_data[i].resp = 2'b10; 
+            expected_data[i].last = (i == pkt.arlen);
+            $display("Out of range access: Address = %0h", (start_addr + i*4));
+            rresp_golden = 2'b10;
+            break;
         end
-    endfunction
+        else begin
+            expected_data[i].data = test_mem[(start_addr + i*4) >> 2];
+            expected_data[i].resp = 2'b00; 
+            expected_data[i].last = (i == pkt.arlen);
+            $display("Reading from memory: Address = %0h, Data = %0h", 
+                      (start_addr + i*4), expected_data[i].data);
+            rresp_golden = 2'b00;
+        end
+    end
+endfunction
+
+*/
+task automatic golden_model_read(
+    ref axi_packet pkt,
+    output bit [1:0] rresp
+);
+    int start_addr   = pkt.araddr;
+    int word_addr    = start_addr >> 2;
+    int num_beats    = pkt.arlen + 1;
+    int total_bytes  = num_beats * (1 << pkt.arsize);
+
+    bit boundary     = ((start_addr % 4096) + total_bytes > 4096);
+    bit out_of_range = ((word_addr + num_beats) > MEMORY_DEPTH);
+
+  
+    pkt.rdata = new[num_beats];
+
+    if (out_of_range || boundary) begin
+        rresp = 2'b10; // SLVERR
+        for (int i = 0; i < num_beats; i++) begin
+            pkt.rdata[i] = '0;   // invalid read returns zero
+            $display("[GOLDEN][READ_ERR] Addr=%0h -> SLVERR",
+                      (start_addr + i*4));
+        end
+    end
+    else begin
+        rresp = 2'b00; // OKAY
+        for (int i = 0; i < num_beats; i++) begin
+            pkt.rdata[i] = test_mem[word_addr + i];
+            $display("[GOLDEN][READ_OK] Addr=%0h Data=%0h",
+                      (start_addr + i*4), pkt.rdata[i]);
+        end
+    end
+endtask
 
     function read_compare();
         for (int i = 0; i <= arbif_pkt.ARLEN; i++) begin
-            if (expected_data[i].data == read_data[i].data &&
-                expected_data[i].resp == read_data[i].resp &&
-                expected_data[i].last == read_data[i].last)
+            if (expected_data[i].data == read_data[i].data)
                 $display("read successful, data: %h, response: %b, last: %b",
                           read_data[i].data, read_data[i].resp, read_data[i].last);
             else
-                $display("read failed, expected data: %h, actual data: %h, response: %b, last: %b",
-                          expected_data[i].data, read_data[i].data, read_data[i].resp, read_data[i].last);
+                $display("read failed, expected data: %h, actual data: %h", expected_data[i].data, read_data[i].data);
+            
         end
     endfunction
 

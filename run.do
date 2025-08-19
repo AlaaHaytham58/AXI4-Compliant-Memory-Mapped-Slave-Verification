@@ -15,3 +15,5 @@ coverage exclude -du axi4_memory -togglenode j
 coverage save -onexit cov.ucdb
 run -all
 coverage report -details -output cov_report.txt 
+
+
