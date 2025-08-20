@@ -29,4 +29,5 @@ typedef enum logic [1:0] {
 	READ = 2'b10,
 	WRITE
 } memory_en_e;
+  
 endpackage 
